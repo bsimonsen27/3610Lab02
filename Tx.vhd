@@ -32,7 +32,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 --use UNISIM.VComponents.all;
 
 entity Tx is
-    generic ( baud_rate_p : in integer := 9600;
+    generic ( baud_rate_p : in integer := 115200;
 	         clk_f_p : in integer := 100e6); -- Using _p to indicate it's a parameter
     port ( clk : in std_logic;	-- clock input
 		reset : in std_logic;	-- reset, active high
@@ -53,7 +53,7 @@ type STATE_TYPE is (IDLE, START, DATA, STOP);
 signal STATE_TX : STATE_TYPE := IDLE;
 
 -- Create constants for loading the baud counter
-constant FULL_COUNT : integer := clk_f_p/baud_rate_p;
+constant FULL_COUNT : integer := clk_f_p/baud_rate_p; -- change for testbenching
 constant HALF_COUNT : integer := FULL_COUNT/2;
 
 -- Create the timer to convert from full-speed clock to baud clock

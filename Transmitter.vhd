@@ -52,7 +52,7 @@ architecture Behavioral of Transmitter is
     signal COUNT_DOWN : integer;
     signal pbuff : std_logic_vector(7 downto 0);
     signal store_start_bit, store_stop_bit: std_logic;
-    constant FULL_COUNT: integer:= 3;     -- 848 for hardware
+    constant FULL_COUNT: integer:= 2;     -- 848 for hardware
     constant HALF_COUNT: integer:= FULL_COUNT/2;
 begin
 process(clk, reset)
@@ -65,30 +65,37 @@ begin
         store_start_bit <= '0';
         store_stop_bit <= '0';
         BIT_COUNT <= 8;
-        COUNT_DOWN <= HALF_COUNT;
+        COUNT_DOWN <= FULL_COUNT;
     elsif rising_edge(clk) then
         pbuff <= pbuff;
-       busy <= '0';
+        busy <= '0';
         case state_tx is
 -----------------------------------------------------------
 -- waiting for start condition
             when IDLE =>
+                sdata <= '1';         -- hold sda line high until sending stop bit
+                busy <= '1';
                 COUNT_DOWN <= 0;
+                BIT_COUNT <= 0;
                 if load = '1' then  -- ready to transmit
+                    pbuff <= pdata; -- load data on pdata line into a buffer
                     state_tx <= START_BIT;
                     --sdata <= '0';       -- send start bit
-                    COUNT_DOWN <= HALF_COUNT;            
+                    COUNT_DOWN <= FULL_COUNT; 
+                    sdata <= '0';   -- start bit 
+                    busy <= '1';          
                 else
                     state_tx <= IDLE;
                 end if;
 -----------------------------------------------------------
             when START_BIT =>
                 busy <= '1';
+                sdata <= '0';   -- keep sending start bit
+                BIT_COUNT <= 0;
                 if COUNT_DOWN = 0 then
+                    sdata <= pbuff(BIT_COUNT);
                     state_tx <= DATA;
-                --    store_start_bit <= pdata(0);
-                    sdata <= '0';       -- send start bit
-                    BIT_COUNT <= 8;
+                    BIT_COUNT <= BIT_COUNT + 1;
                     COUNT_DOWN <= FULL_COUNT;
                 else --count_down > 0 then
                     COUNT_DOWN <= COUNT_DOWN - 1;
@@ -96,15 +103,16 @@ begin
                 end if;
 -----------------------------------------------------------
             when DATA =>
-            
+            sdata <= pbuff(BIT_COUNT - 1);      -- continue sending previous bit
+            busy <= '1';                        -- busy because sending data
             if COUNT_DOWN = 0 then
                 busy <= '1';               
-                if BIT_COUNT = 0 then
+                if BIT_COUNT < 7 then
                     state_tx <= STOP_BIT;
-              --      store_stop_bit <= sdata;
+                    sdata <= '1';               -- send stop bit
                 else
-                    sdata <= pdata(BIT_COUNT - 1);      -- sdata value assigned to buffer signal
-                    BIT_COUNT <= BIT_COUNT - 1;
+                    sdata <= pbuff(BIT_COUNT);      -- sdata value assigned to buffer signal
+                    BIT_COUNT <= BIT_COUNT + 1;
                     COUNT_DOWN <= FULL_COUNT;
                      
                     state_tx <= data;              
@@ -115,7 +123,7 @@ begin
             end if;  
 -----------------------------------------------------------
             when STOP_BIT =>
-                sdata <= '1';
+                sdata <= '1';   -- still sending stop bit/holding sda line high
                 state_tx <= IDLE;
                 busy <= '0';       -- ready to read 
             when others =>

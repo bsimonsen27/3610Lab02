@@ -37,8 +37,8 @@ entity Receiver is
     reset : in std_logic;                       -- reset, active high
     sdata : in std_logic;                       -- serial data in
     pdata : out std_logic_vector(7 downto 0);   -- parallel data out
-    ready : out std_logic;                      -- when 1, we are ready to receive more data
-    idle_state : out std_logic_vector(1 downto 0)); -- DEBUG, identifies what state we are in
+    ready : out std_logic);                      -- when 1, we are ready to receive more data
+    --idle_state : out std_logic_vector(1 downto 0)); -- DEBUG, identifies what state we are in
 end Receiver;
 
 architecture Behavioral of Receiver is
@@ -52,7 +52,7 @@ architecture Behavioral of Receiver is
     signal COUNT_DOWN : integer;
     signal pbuff : std_logic_vector(7 downto 0);
     signal store_start_bit, store_stop_bit: std_logic;
-    constant FULL_COUNT: integer:= 3;
+    constant FULL_COUNT: integer:= 848;     --848 for hardware
     constant HALF_COUNT: integer:= FULL_COUNT/2;
     
 begin
@@ -75,7 +75,7 @@ begin
 -- waiting for start condition
             when IDLE =>
                 COUNT_DOWN <= 0;
-                idle_state <= "11"; --DEBUGGING
+                --idle_state <= "11"; --DEBUGGING
                 if sdata = '0' then
                     state_rx <= START_BIT;
                     COUNT_DOWN <= HALF_COUNT;
@@ -85,7 +85,7 @@ begin
                 end if;
 -----------------------------------------------------------
             when START_BIT =>
-                idle_state <= "00";
+                --idle_state <= "00";
                 if COUNT_DOWN = 0 then
                     state_rx <= DATA;
                     store_start_bit <= sdata;
@@ -98,7 +98,7 @@ begin
             when DATA =>
             
             if COUNT_DOWN = 0 then
-                idle_state <= "01";
+                --idle_state <= "01";
                 if BIT_COUNT = 0 then
                     state_rx <= STOP_BIT;
                     store_stop_bit <= sdata;
@@ -112,7 +112,7 @@ begin
             end if;  
 -----------------------------------------------------------
             when STOP_BIT =>
-                idle_state <= "10";
+                --idle_state <= "10";
                 state_rx <=IDLE;
                 ready <= '1';       -- ready to read 
 --                if store_stop_bit = '1' then
