@@ -36,35 +36,28 @@ entity testbench is
 end testbench;
 
 architecture Behavioral of testbench is
-
-    component Receiver is
-    port ( clk : in std_logic;                  -- clock input
-    reset : in std_logic;                       -- reset, active high
-    sdata : in std_logic;                       -- serial data in
-    pdata : out std_logic_vector(7 downto 0);   -- parallel data out
-    ready : out std_logic);                      -- when 1, we are ready to receive more data
-  end component;
   
---    component Tx is
---    generic ( baud_rate_p : in integer := 9600;
---	         clk_f_p : in integer := 100e6); -- Using _p to indicate it's a parameter
---    port ( clk : in std_logic;	-- clock input
---		reset : in std_logic;	-- reset, active high
---		pdata : in std_logic_vector(7 downto 0); -- parallel data in
---		load : in std_logic;	-- load signal, active high
---		busy : out std_logic; 	-- busy indicator
---		sdata : out std_logic);	-- serial data out
+  component RX is
+generic ( baud_rate_p : in integer := 115200;
+	      clk_f_p : in integer := 100e6); -- Using _p to indicate it's a parameter
+	port (clk : in std_logic;	-- clock input
+		reset : in std_logic;	-- reset, active high
+		sdata : in std_logic;	-- serial data in
+		pdata : out std_logic_vector(7 downto 0);	-- parallel data out
+		ready : out std_logic);	-- ready strobe, active high
+end component;
 
---    end component;
+component Tx is
+    generic ( baud_rate_p : in integer := 115200;
+	         clk_f_p : in integer := 100e6); -- Using _p to indicate it's a parameter
+    port ( clk : in std_logic;	-- clock input
+		reset : in std_logic;	-- reset, active high
+		pdata : in std_logic_vector(7 downto 0); -- parallel data in
+		load : in std_logic;	-- load signal, active high
+		busy : out std_logic; 	-- busy indicator
+		sdata : out std_logic);	-- serial data out
 
-  component Transmitter is
-    port (clk : in std_logic; -- clock input
-        reset : in std_logic; -- reset, active high
-        pdata : in std_logic_vector(7 downto 0); -- parallel data in
-        load : in std_logic; -- load signal, active high
-        busy : out std_logic; -- busy indicator
-        sdata : out std_logic); -- serial data out
-  end component;
+end component;
 
   signal clk_tb : std_logic := '0';
   signal reset_tb : std_logic := '1';
@@ -92,7 +85,7 @@ architecture Behavioral of testbench is
   end TX_BITS;
 
 begin
-  RX: Receiver port map(
+  R1: RX port map(
     clk => clk_tb,
     reset => reset_tb,
     sdata => sdata_in_tb,
@@ -100,7 +93,7 @@ begin
     ready => ready_tb
   );
 
-  TX: Transmitter port map(
+  T1: Tx port map(
     clk => clk_tb, 
     reset => reset_tb,
     sdata => sdata_out_tb,
@@ -109,12 +102,6 @@ begin
     busy => busy_tb
   );
 
---    TTX: Tx port map(clk => clk_tb,
---		reset => reset_tb,
---		pdata => pdata_tb,
---		load => ready_tb,
---		busy => busy_tb,
---		sdata => sdata_out_tb);
 
   clk_tb <= not clk_tb after 5 ns;
 

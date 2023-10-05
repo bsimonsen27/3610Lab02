@@ -63,6 +63,16 @@ end component;
 --        sdata : out std_logic); -- serial data out
 --end component;
 
+component RX is
+generic ( baud_rate_p : in integer := 115200;
+	      clk_f_p : in integer := 100e6); -- Using _p to indicate it's a parameter
+	port (clk : in std_logic;	-- clock input
+		reset : in std_logic;	-- reset, active high
+		sdata : in std_logic;	-- serial data in
+		pdata : out std_logic_vector(7 downto 0);	-- parallel data out
+		ready : out std_logic);	-- ready strobe, active high
+end component;
+
 component Tx is
     generic ( baud_rate_p : in integer := 115200;
 	         clk_f_p : in integer := 100e6); -- Using _p to indicate it's a parameter
@@ -81,11 +91,13 @@ signal busy_s : std_logic;
 --signal sdata_out : std_logic;
 begin
 n_clk <= not clk_t;
-R1 : Receiver port map( clk => clk_t, 
-                        reset => rst, 
-                        ready => rdy_s, 
-                        sdata => sdata, 
-                        pdata => pdata_s);
+--R1 : Receiver port map( clk => clk_t, 
+--                        reset => rst, 
+--                        ready => rdy_s, 
+--                        sdata => sdata, 
+--                        pdata => pdata_s);
+                        
+
 D  : acu port map(clk => n_clk,
                   rst => rst,
                   ce => rdy_s,
@@ -97,6 +109,13 @@ D  : acu port map(clk => n_clk,
 --                          load => rdy_s,
 --                          busy => busy_s,
 --                          sdata => sdata_out);
+
+R2 : RX port map (clk => clk_t,
+                  reset => rst,
+                  ready => rdy_s,
+                  pdata => pdata_s,
+                  sdata => sdata
+                  );
 
 T2 : TX port map(clk => clk_t,
                  reset => rst,

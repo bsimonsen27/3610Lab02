@@ -53,7 +53,7 @@ type STATE_TYPE is (IDLE, START, DATA, STOP);
 signal STATE_TX : STATE_TYPE := IDLE;
 
 -- Create constants for loading the baud counter
-constant FULL_COUNT : integer := clk_f_p/baud_rate_p; -- change for testbenching
+constant FULL_COUNT : integer := 2; --clk_f_p/baud_rate_p; -- change for testbenching
 constant HALF_COUNT : integer := FULL_COUNT/2;
 
 -- Create the timer to convert from full-speed clock to baud clock
